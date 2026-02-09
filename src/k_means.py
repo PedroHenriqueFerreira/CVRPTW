@@ -50,8 +50,10 @@ class KMeans:
                         cost = distance(cluster.pos, c.pos)
                     else:
                         cost = distance(self.instance.customers[cluster.value[-1]].pos, c.pos)
-                        
                         arrival = cluster.time + cost
+                    
+                        if arrival > c.due_date:
+                            continue
                         
                         cost += max(0, arrival - c.due_date)
                         

@@ -7,17 +7,16 @@ from src.route import Route
 
 from sys import argv
 
-if len(argv) < 2:
-    print('Usage: python main.py <instance_file>')
+if len(argv) < 3:
+    print('Usage: python main.py <instance_file> <vehicle_number>')
     exit(1)
 
 instance = Instance(argv[1])
 instance.load()
 
 total_demand = sum(customer.demand for customer in instance.customers)
-k = int(np.ceil(total_demand / instance.vehicle_capacity)) + 5
 
-k_means = KMeans(instance, n_clusters=k, random_state=None)
+k_means = KMeans(instance, n_clusters=int(argv[2]), random_state=None)
 clusters = k_means.fit(instance.customers[1:])
 
 plt.figure(figsize=(12, 6))
