@@ -1,6 +1,7 @@
 import numpy as np
 
 from src.customer import Customer
+from src.utils import distance
 
 class Instance:
     ''' Class representing a CVRPTW instance.'''
@@ -9,15 +10,10 @@ class Instance:
         self.file = file # Instance file
         
         self.name = '' # Instance name
-        
         self.vehicle_number = 0 # Number of vehicles
         self.vehicle_capacity = 0 # Each vehicle capacity
-        
-        self.dimension = 0 # Number of customers
-        self.edge_weight_type = '' # Edge weight type
-        self.edge_weight_format = '' # Edge weight format
-        
         self.customers: list[Customer] = [] # List of customers
+        
         self.distances: np.ndarray = None # Distance matrix
     
     def load(self):
@@ -32,15 +28,11 @@ class Instance:
         for line in lines[9:-1]:
             self.customers.append(Customer(*map(int, line.strip().split())))
             
-        self.distances = np.zeros((len(self.customers), len(self.customers)), dtype=int)
+        self.distances = np.zeros((len(self.customers), len(self.customers)))
             
         for i in range(len(self.customers)):
             for j in range(i + 1, len(self.customers)):
-                dx = (self.customers[i].x - self.customers[j].x) ** 2
-                dy = (self.customers[i].y - self.customers[j].y) ** 2
-                
-                distance = np.sqrt(dx + dy)
-                
-                self.distances[i, j] = self.distances[j, i] = round(distance)
+                dist = distance(self.customers[i].pos, self.customers[j].pos)
+                self.distances[i, j] = self.distances[j, i] = dist
         
-        return self
+    

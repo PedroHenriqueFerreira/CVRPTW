@@ -48,17 +48,10 @@ class ClarkeWright:
             if self.routes[j][0] != j and self.routes[j][-1] != j:
                 continue
             
-            if self.routes[i][0] == i:
-                self.routes[i] = self.routes[i].reversed()
-            
-            if self.routes[j][-1] == j:
-                self.routes[j] = self.routes[j].reversed()
-                
-            if self.routes[i][-1] != i or self.routes[j][0] != j:
-                continue
-            
             if self.routes[i].demand + self.routes[j].demand > self.instance.vehicle_capacity:
                 continue
+            
+             
             
             self.routes[i] += self.routes[j]
             del self.routes[j]

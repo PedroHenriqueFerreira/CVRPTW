@@ -1,3 +1,5 @@
+import numpy as np
+
 from time import time
 
 def timer(func):
@@ -14,3 +16,8 @@ def timer(func):
         return end - start, result
     
     return wrapper
+
+def distance(a: np.ndarray, b: np.ndarray) -> int:
+    ''' Calculate the distance between two positions '''
+    
+    return np.linalg.norm(a - b)
