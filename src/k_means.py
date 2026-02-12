@@ -20,14 +20,14 @@ class KMeans:
         
         if random_state is not None:
             seed(random_state)
-        
-    def fit(self, customers: list[Customer]):
+    
+    @timer
+    def run(self, customers: list[Customer]) -> tuple[float, list[Route]]:
         clusters: list[Route] = []
         
         for customer in sample(customers, self.n_clusters):
             clusters.append(Route(self.instance, [], customer.pos))
         
-        # customers.sort(key=lambda c: c.demand, reverse=True)
         customers.sort(key=lambda c: c.due_date, reverse=False)
         
         pos = [cluster.pos for cluster in clusters]
@@ -38,37 +38,34 @@ class KMeans:
             for i, cluster in enumerate(clusters):
                 cluster.clear(pos[i])
             
-            for c in customers:
-                best = -1
+            for customer in customers:
+                best: Route | None = None
                 best_cost = float('inf')
                 
-                for i, cluster in enumerate(clusters):
-                    if cluster.demand + c.demand > self.instance.vehicle_capacity:
+                for cluster in clusters:
+                    if cluster.demand + customer.demand > self.instance.vehicle_capacity:
                         continue
                     
-                    if not cluster.value:
-                        cost = distance(cluster.pos, c.pos)
-                    else:
-                        cost = distance(self.instance.customers[cluster.value[-1]].pos, c.pos)
-                        arrival = cluster.time + cost
-                    
-                        if arrival > c.due_date:
-                            continue
+                    if len(cluster):
+                        cost = distance(cluster[-1].pos, customer.pos)
                         
-                        cost += max(0, arrival - c.due_date)
+                        if cluster.time + cost > customer.due_date:
+                            continue
+                    else:
+                        cost = distance(cluster.pos, customer.pos)
                         
                     if cost < best_cost:
                         best_cost = cost
-                        best = i
+                        best = cluster
                 
-                if best == -1:
+                if best is None:
                     raise ValueError('Increase the number of clusters')
                 
-                clusters[best].append(c.id)
+                best.append(customer)
                 
             for i, cluster in enumerate(clusters):
-                if cluster.value:
-                    pos[i] = np.mean([self.instance.customers[j].pos for j in cluster], axis=0)
+                if len(cluster):
+                    pos[i] = np.mean([customer.pos for customer in cluster], axis=0)
                 else:
                     pos[i] = choice(self.instance.customers).pos
                 

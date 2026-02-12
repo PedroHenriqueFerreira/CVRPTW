@@ -20,6 +20,18 @@ class Customer:
         self.due_date = due_date
         self.service_time = service_time
         
+    @property
+    def x(self):
+        ''' Get the x coordinate of the customer '''
+        
+        return self.pos[0]
+    
+    @property
+    def y(self):
+        ''' Get the y coordinate of the customer '''
+        
+        return self.pos[1]
+        
     def __repr__(self):
         ''' Return the string representation of the customer '''
         

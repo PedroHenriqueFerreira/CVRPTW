@@ -35,4 +35,4 @@ class Instance:
                 dist = distance(self.customers[i].pos, self.customers[j].pos)
                 self.distances[i, j] = self.distances[j, i] = dist
         
-    
+        return self
