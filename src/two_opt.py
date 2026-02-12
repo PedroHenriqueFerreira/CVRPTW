@@ -8,7 +8,9 @@ class TwoOpt:
     def run(self, routes: list[Route]) -> tuple[float, list[Route]]:
         ''' Run the 2-opt heuristic '''
         
-        for idx, route in enumerate(routes):
+        for idx in range(len(routes)):
+            route = routes[idx]
+            
             best_route = route
             
             while True:
@@ -19,6 +21,7 @@ class TwoOpt:
                         new_route = route.reversed(i, j + 1)
                         
                         if new_route.cost < best_route.cost and new_route.time != float('inf'):
+                            print('AAAA', new_route.time)
                             best_route = new_route
                             improved = True        
                 

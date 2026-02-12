@@ -16,14 +16,14 @@ instance = Instance(argv[1]).load()
 
 km_time, clusters = KMeans(instance, n_clusters=int(argv[2]), random_state=0).run(instance.customers[1:])
 
-print('TIME', sum(cluster.time for cluster in clusters), sum(cluster.calculate_time() for cluster in clusters))
-print('DEMAND', sum(cluster.demand for cluster in clusters), sum(cluster.calculate_demand() for cluster in clusters))
+# print('TIME', sum(cluster.time for cluster in clusters), sum(cluster.calculate_time() for cluster in clusters))
+# print('DEMAND', sum(cluster.demand for cluster in clusters), sum(cluster.calculate_demand() for cluster in clusters))
 print('COST', sum(cluster.cost for cluster in clusters), sum(cluster.calculate_cost() for cluster in clusters))
 
 to_time, clusters = TwoOpt().run(clusters)
 
-print('TIME', sum(cluster.time for cluster in clusters), sum(cluster.calculate_time() for cluster in clusters))
-print('DEMAND', sum(cluster.demand for cluster in clusters), sum(cluster.calculate_demand() for cluster in clusters))
+# print('TIME', sum(cluster.time for cluster in clusters), sum(cluster.calculate_time() for cluster in clusters))
+# print('DEMAND', sum(cluster.demand for cluster in clusters), sum(cluster.calculate_demand() for cluster in clusters))
 print('COST', sum(cluster.cost for cluster in clusters), sum(cluster.calculate_cost() for cluster in clusters))
 
 plt.figure(figsize=(12, 6))

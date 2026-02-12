@@ -93,13 +93,8 @@ class Route:
         # TODO: CHECK
         cost = self._cost
         if self._cost >= 0:
-            if i > 0:
-                cost -= self.instance.distances[self.value[i - 1], self.value[i]]
-                cost += self.instance.distances[self.value[i - 1], self.value[j - 1]]
-            
-            if j < len(self.value):
-                cost -= self.instance.distances[self.value[j - 1], self.value[j]]
-                cost += self.instance.distances[self.value[i], self.value[j]]
+            self._cost = -1
+            # TODO
                 
         return Route(self.instance, value, self.pos, cost, self.demand)
 
@@ -137,7 +132,7 @@ class Route:
     def time(self):
         ''' Get the route time '''
         
-        if self._time is None:
+        if self._time < 0:
             self._time = self.calculate_time()
         
         return self._time
