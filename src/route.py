@@ -71,6 +71,9 @@ class Route:
             else:
                 self._time = max(self._time, customer.ready_time) 
                 self._time += customer.service_time
+                
+            if self._time + self.instance.distances[idx, 0] > self.instance.depot.due_date:
+                self._time = float('inf')
     
     def clear(self, pos: np.ndarray | None = None):
         ''' Clear the route '''
@@ -90,13 +93,7 @@ class Route:
         
         value[i:j] = value[i:j][::-1]
         
-        # TODO: CHECK
-        cost = self._cost
-        if self._cost >= 0:
-            self._cost = -1
-            # TODO
-                
-        return Route(self.instance, value, self.pos, cost, self.demand)
+        return Route(self.instance, value, self.pos, -1, self.demand)
 
     @property
     def x(self):
@@ -159,18 +156,21 @@ class Route:
         ''' Calculate the time for the route '''
         
         time = 0
-        prev = 0
         
-        for i in range(len(self.value)):
-            time += self.instance.distances[prev, self.value[i]]
-            
-            customer = self.instance.customers[self.value[i]]
+        prev = self.instance.depot
+        for customer in self:
+            time += self.instance.distances[prev.id, customer.id]
             
             if time > customer.due_date:
                 return float('inf')
             
             time = max(time, customer.ready_time) + customer.service_time
             
-            prev = self.value[i]
+            prev = customer
+        
+        time += self.instance.distances[prev.id, self.instance.depot.id]
+        
+        if time > self.instance.depot.due_date:
+            return float('inf')
         
         return time
