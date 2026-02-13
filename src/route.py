@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.instance import Instance
+from src.data import Data
 from src.customer import Customer
 
 class Route:
@@ -8,14 +8,14 @@ class Route:
     
     def __init__(
         self, 
-        instance: Instance, 
+        data: Data, 
         value: list[int],
         pos: np.ndarray | None = None,
         cost: float = -1,
         demand: int = -1,
         time: int = -1,
     ):
-        self.instance = instance # CVRPTW instance
+        self.data = data # CVRPTW instance
         self.value = value # Route list
         
         self.pos = pos # Route position (for clustering)
@@ -37,42 +37,41 @@ class Route:
     def __iter__(self):
         ''' Iterate over the route '''
         
-        return iter(self.instance.customers[item] for item in self.value)
+        return iter(self.data.customers[item] for item in self.value)
         
     def __getitem__(self, idx: int) -> Customer:
         ''' Get the customer at the index '''
         
-        return self.instance.customers[self.value[idx]]
+        return self.data.customers[self.value[idx]]
 
     def append(self, customer: Customer):
         ''' Append a customer to the end of the route '''
         
-        self.value.append((idx := customer.id))
+        self.value.append(customer.id)
         
         if self._demand >= 0:
             self._demand += customer.demand
             
         if self._cost >= 0:
             if len(self.value) == 1:
-                self._cost = self.instance.distances[0, idx] + self.instance.distances[idx, 0]
+                self._cost = 2 * self.data.distances[0, customer.id]
             else:
-                self._cost += self.instance.distances[self.value[-2], idx] 
-                self._cost += self.instance.distances[idx, 0]
-                self._cost -= self.instance.distances[self.value[-2], 0]
+                self._cost += self.data.distances[self.value[-2], customer.id] 
+                self._cost += self.data.distances[customer.id, 0]
+                self._cost -= self.data.distances[self.value[-2], 0]
                 
         if self._time >= 0:
             if len(self.value) == 1:
-                self._time = self.instance.distances[0, idx]
+                self._time = self.data.distances[0, customer.id]
             else:
-                self._time += self.instance.distances[self.value[-2], idx]
+                self._time += self.data.distances[self.value[-2], customer.id]
                 
             if self._time > customer.due_date:
                 self._time = float('inf')
             else:
-                self._time = max(self._time, customer.ready_time) 
-                self._time += customer.service_time
+                self._time = max(self._time, customer.ready_time) + customer.service_time
                 
-            if self._time + self.instance.distances[idx, 0] > self.instance.depot.due_date:
+            if self._time + self.data.distances[customer.id, 0] > self.data.depot.due_date:
                 self._time = float('inf')
     
     def clear(self, pos: np.ndarray | None = None):
@@ -93,7 +92,57 @@ class Route:
         
         value[i:j] = value[i:j][::-1]
         
-        return Route(self.instance, value, self.pos, -1, self.demand)
+        cost = self._cost
+        if cost >= 0:
+            if i > 0:
+                cost -= self.data.distances[value[i - 1], value[i]]
+                cost += self.data.distances[value[i - 1], value[j - 1]]
+            else:
+                cost -= self.data.distances[0, value[i]]
+                cost += self.data.distances[0, value[j - 1]]
+                
+            if j < len(value):
+                cost -= self.data.distances[value[j - 1], value[j]]
+                cost += self.data.distances[value[i], value[j]]
+            else:
+                cost -= self.data.distances[value[j - 1], 0]
+                cost += self.data.distances[value[i], 0]
+            
+            # TODO: FIX
+            cost = -1
+        
+        return Route(self.data, value, self.pos, cost, self.demand)
+
+    def insert(self, index: int, customer: Customer):
+        ''' Insert a customer at the index '''
+        
+        value = self.value[:]
+        
+        value.insert(index, customer.id)
+
+        demand = self._demand
+        if demand >= 0:
+            demand += customer.demand
+            
+        cost = self._cost
+        if cost >= 0:
+            if len(value) == 1:
+                cost = 2 * self.data.distances[0, customer.id]
+            else:
+                if index == 0:
+                    cost += self.data.distances[0, customer.id] 
+                    cost += self.data.distances[customer.id, value[1]]
+                    cost -= self.data.distances[0, value[1]]
+                elif index == len(value) - 1:
+                    cost += self.data.distances[value[-2], customer.id] 
+                    cost += self.data.distances[customer.id, 0]
+                    cost -= self.data.distances[value[-2], 0]
+                else:
+                    cost += self.data.distances[value[index - 1], customer.id] 
+                    cost += self.data.distances[customer.id, value[index + 1]]
+                    cost -= self.data.distances[value[index - 1], value[index + 1]]
+
+        return Route(self.data, value, self.pos, cost, demand)                    
 
     @property
     def x(self):
@@ -140,26 +189,26 @@ class Route:
         if not self.value:
             return 0
         
-        cost = self.instance.distances[0, self.value[0]] + self.instance.distances[self.value[-1], 0]
+        cost = self.data.distances[0, self.value[0]] + self.data.distances[self.value[-1], 0]
         
         for i in range(len(self.value) - 1):
-            cost += self.instance.distances[self.value[i], self.value[i + 1]]
+            cost += self.data.distances[self.value[i], self.value[i + 1]]
         
         return cost
     
     def calculate_demand(self):
         ''' Calculate the demand for the route '''
         
-        return sum(self.instance.customers[c].demand for c in self.value)
+        return sum(self.data.customers[c].demand for c in self.value)
     
     def calculate_time(self):
         ''' Calculate the time for the route '''
         
         time = 0
         
-        prev = self.instance.depot
+        prev = self.data.depot
         for customer in self:
-            time += self.instance.distances[prev.id, customer.id]
+            time += self.data.distances[prev.id, customer.id]
             
             if time > customer.due_date:
                 return float('inf')
@@ -168,9 +217,9 @@ class Route:
             
             prev = customer
         
-        time += self.instance.distances[prev.id, self.instance.depot.id]
+        time += self.data.distances[prev.id, self.data.depot.id]
         
-        if time > self.instance.depot.due_date:
+        if time > self.data.depot.due_date:
             return float('inf')
         
         return time

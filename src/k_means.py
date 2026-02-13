@@ -2,20 +2,21 @@ import numpy as np
 from random import sample, choice, seed
 from math import ceil
 
-from src.instance import Instance
+from src.data import Data
 from src.customer import Customer
 from src.route import Route
+
 from src.utils import timer, distance
 
 class KMeans:
     def __init__(
         self, 
-        instance: Instance,
+        data: Data,
         n_clusters: int | None = None,
         max_iter = 100, 
         random_state: int | None = None
     ):
-        self.instance = instance
+        self.data = data
         self.n_clusters = n_clusters
         self.max_iter = max_iter
 
@@ -29,7 +30,7 @@ class KMeans:
         pos: list[np.ndarray] = []
         
         for customer in sample(customers, self.n_clusters):
-            clusters.append(Route(self.instance, [], customer.pos))
+            clusters.append(Route(self.data, [], customer.pos))
             pos.append(customer.pos)
         
         for it in range(self.max_iter):
@@ -40,25 +41,30 @@ class KMeans:
             
             for customer in customers:
                 best: Route | None = None
-                best_cost = float('inf')
                 
                 for cluster in clusters:
-                    if cluster.demand + customer.demand > self.instance.vehicle_capacity:
+                    if cluster.demand + customer.demand > self.data.vehicle_capacity:
                         continue
                     
                     if len(cluster):
                         cost = distance(cluster[-1].pos, customer.pos)
                         
-                        if cluster.time + cost > customer.due_date:
+                        time = cluster.time + cost
+                    
+                        if time > customer.due_date:
                             continue
                         
-                        if cluster.time + cost + self.instance.distances[customer.id, 0] > self.instance.depot.due_date:
+                        time = max(time, customer.ready_time) + customer.service_time
+                        
+                        if time + self.data.distances[customer.id, 0] > self.data.depot.due_date:
                             continue
+                        
                     else:
                         cost = distance(cluster.pos, customer.pos)
                         
-                    if cost < best_cost:
-                        best_cost = cost
+                        # Dont need to check constraints for a single customer (only depot -> customer -> depot)
+                        
+                    if best is None or cost < best.cost:
                         best = cluster
                 
                 if best is None:
@@ -81,15 +87,17 @@ class KMeans:
     def run(self) -> tuple[float, list[Route]]:
         ''' Returns a list of clusters (routes) and the time taken to compute them.'''
         
-        customers = sorted(self.instance.customers[1:], key=lambda c: c.due_date)
-        
-        print([customer.due_date for customer in customers])
+        customers = sorted(self.data.customers[1:], key=lambda c: c.due_date)
     
         if self.n_clusters is None:
-            self.n_clusters = self.instance.min_vehicle_number
+            self.n_clusters = self.data.min_vehicle_number
+        else:
+            return self.fit(customers)
         
-        while self.n_clusters <= self.instance.max_vehicle_number:
+        while self.n_clusters <= self.data.max_vehicle_number:
             try:
                 return self.fit(customers)
             except Exception:
                 self.n_clusters += 1
+                
+        raise ValueError('Could not find a solution with the given number of clusters')

@@ -4,7 +4,7 @@ from math import ceil
 from src.customer import Customer
 from src.utils import distance
 
-class Instance:
+class Data:
     ''' Class representing a CVRPTW instance.'''
     
     def __init__(self, file: str):
