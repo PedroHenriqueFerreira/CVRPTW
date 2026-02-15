@@ -4,31 +4,26 @@ from src.utils import timer
 class TwoOpt:
     ''' Class for the 2-opt heuristic '''
     
+    def __init__(self, routes: list[Route]):
+        self.routes = routes
+    
     @timer
-    def run(self, routes: list[Route]) -> tuple[float, list[Route]]:
+    def run(self) -> tuple[float, list[Route]]:
         ''' Run the 2-opt heuristic '''
         
-        out: list[Route] = []
+        routes: list[Route] = []
         
-        for idx in range(len(routes)):
-            route = best_route = routes[idx]
+        for idx in range(len(self.routes)):
+            route = self.routes[idx]
             
             while True:
-                improved = False
-                
-                for i in range(len(route) - 1):
-                    for j in range(i + 1, len(route)):
-                        new_route = route.reversed(i, j + 1)
-                        
-                        if new_route.cost < best_route.cost and new_route.time != float('inf'):
-                            best_route = new_route
-                            improved = True  
+                best = route.best_reversed()
                     
-                route = best_route
-                
-                if not improved:
+                if best.cost < route.cost:
+                    route = best
+                else:
                     break
             
-            out.append(route)   
+            routes.append(route)   
             
-        return out
+        return routes

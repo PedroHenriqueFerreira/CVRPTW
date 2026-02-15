@@ -12,7 +12,7 @@ class KMeans:
     def __init__(
         self, 
         data: Data,
-        n_clusters: int | None = None,
+        n_clusters: int,
         max_iter = 100, 
         random_state: int | None = None
     ):
@@ -23,9 +23,12 @@ class KMeans:
         if random_state is not None:
             seed(random_state)
     
-    def fit(self, customers: list[Customer]):
-        ''' Fit the model to the instance '''
+    @timer
+    def run(self) -> tuple[float, list[Route]]:
+        ''' Returns a list of clusters (routes) and the time taken to compute them.'''
         
+        customers = sorted(self.data.customers[1:], key=lambda c: c.due_date)
+    
         clusters: list[Route] = []
         pos: list[np.ndarray] = []
         
@@ -34,15 +37,18 @@ class KMeans:
             pos.append(customer.pos)
         
         for it in range(self.max_iter):
-            print(f'Iteration {it + 1}/{self.max_iter}')
+            # print(f'Iteration {it + 1}/{self.max_iter}')
             
             for i, cluster in enumerate(clusters):
                 cluster.clear(pos[i])
+
+            remaining: list[Customer] = []
             
             for customer in customers:
-                best: Route | None = None
+                best = None
+                best_cost = float('inf')
                 
-                for cluster in clusters:
+                for i, cluster in enumerate(clusters):
                     if cluster.demand + customer.demand > self.data.vehicle_capacity:
                         continue
                     
@@ -64,14 +70,32 @@ class KMeans:
                         
                         # Dont need to check constraints for a single customer (only depot -> customer -> depot)
                         
-                    if best is None or cost < best.cost:
+                    if cost < best_cost:
+                        best_cost = cost
                         best = cluster
-                
+                        
                 if best is None:
+                    remaining.append(customer)
+                    # raise ValueError('Increase the number of clusters')
+                else:
+                    best.append(customer)
+                
+            for customer in remaining:
+                clusters = sorted(clusters, key=lambda cluster: distance(cluster.pos, customer.pos))
+                
+                best_insertion = None
+                
+                for i, cluster in enumerate(clusters):
+                    best_insertion = cluster.best_insertion(customer)
+                    
+                    if best_insertion is not None:
+                        clusters[i] = best_insertion
+                        
+                        break
+            
+                if best_insertion is None:
                     raise ValueError('Increase the number of clusters')
-                
-                best.append(customer)
-                
+            
             for i, cluster in enumerate(clusters):
                 if len(cluster):
                     pos[i] = np.mean([customer.pos for customer in cluster], axis=0)
@@ -82,22 +106,3 @@ class KMeans:
                 break
             
         return clusters
-    
-    @timer
-    def run(self) -> tuple[float, list[Route]]:
-        ''' Returns a list of clusters (routes) and the time taken to compute them.'''
-        
-        customers = sorted(self.data.customers[1:], key=lambda c: c.due_date)
-    
-        if self.n_clusters is None:
-            self.n_clusters = self.data.min_vehicle_number
-        else:
-            return self.fit(customers)
-        
-        while self.n_clusters <= self.data.max_vehicle_number:
-            try:
-                return self.fit(customers)
-            except Exception:
-                self.n_clusters += 1
-                
-        raise ValueError('Could not find a solution with the given number of clusters')

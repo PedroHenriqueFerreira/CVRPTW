@@ -29,6 +29,11 @@ class Route:
         
         return f'Route{self.value}'
         
+    def __eq__(self, other: 'Route'):
+        ''' Check if two routes are equal '''
+        
+        return self.value == other.value
+        
     def __len__(self):
         ''' Get the length of the route '''
         
@@ -113,7 +118,21 @@ class Route:
         
         return Route(self.data, value, self.pos, cost, self.demand)
 
-    def insert(self, index: int, customer: Customer):
+    def best_reversed(self):
+        ''' Returns the best reversed route '''
+        
+        best = self
+        
+        for i in range(len(self.value) - 1):
+            for j in range(i + 1, len(self.value)):
+                route = self.reversed(i, j + 1)
+                
+                if route.feasible and route.cost < best.cost:
+                    best = route
+        
+        return best
+
+    def insertion(self, index: int, customer: Customer):
         ''' Insert a customer at the index '''
         
         value = self.value[:]
@@ -143,6 +162,22 @@ class Route:
                     cost -= self.data.distances[value[index - 1], value[index + 1]]
 
         return Route(self.data, value, self.pos, cost, demand)                    
+
+    def best_insertion(self, customer: Customer):
+        ''' Insert a customer at the best position '''
+        
+        if self.demand + customer.demand > self.data.vehicle_capacity:
+            return None
+        
+        best = None
+        
+        for idx in range(len(self.value) + 1):
+            new = self.insertion(idx, customer)
+            
+            if best is None or (new.cost < best.cost and new.feasible):
+                best = new
+        
+        return best
 
     @property
     def x(self):
@@ -223,3 +258,10 @@ class Route:
             return float('inf')
         
         return time
+
+    @property
+    def feasible(self) -> bool:
+        ''' Check if the route is feasible '''
+        
+        return self.demand <= self.data.vehicle_capacity and self.time <= self.data.depot.due_date
+    

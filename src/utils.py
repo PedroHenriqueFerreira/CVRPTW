@@ -41,7 +41,9 @@ def plot(instance, clusters):
         plt.plot([instance.depot.x, c1.x], [instance.depot.y, c1.y], c='gray', linestyle='--', linewidth=1)
         plt.plot([instance.depot.x, c2.x], [instance.depot.y, c2.y], c='gray', linestyle='--', linewidth=1)
         
-        plt.scatter([c.x for c in cluster], [c.y for c in cluster], label=f'Route {i + 1}', zorder=3)
+        label = f'Route {i + 1} (Demand: {sum(c.demand for c in cluster)})'
+        
+        plt.scatter([c.x for c in cluster], [c.y for c in cluster], label=label, zorder=3)
 
     # PLOT DEPOT (MARKER)
     plt.scatter(instance.depot.x, instance.depot.y, c='black', s=100, marker='X', label='Depot', zorder=4)
