@@ -37,10 +37,10 @@ class Data:
         
         self.min_vehicle_number = ceil(sum(c.demand for c in self.customers) / self.vehicle_capacity)
             
-        self.distances = np.zeros((len(self.customers), len(self.customers)))
+        self.distances = np.zeros((len(self.customers), len(self.customers)), dtype=int)
             
         for i, i_customer in enumerate(self.customers):
             for j, j_customer in enumerate(self.customers[i + 1:], start=i + 1):
-                self.distances[i, j] = self.distances[j, i] = distance(i_customer.pos, j_customer.pos)
+                self.distances[i, j] = self.distances[j, i] = round(distance(i_customer.pos, j_customer.pos))
         
         return self

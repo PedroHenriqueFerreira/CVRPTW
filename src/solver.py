@@ -338,6 +338,7 @@ class Solver:
                     continue
                 
                 if j == 0:
+                    
                     # CHECK IF THE VEHICLE CAN RETURN TO THE DEPOT
                     
                     w_i_j_v = [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
