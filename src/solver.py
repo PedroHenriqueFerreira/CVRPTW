@@ -350,7 +350,7 @@ class Solver:
                     factors += neg_exp
                     clause += T_i
                     
-                    factors += [-round(self.data.distances[i, j])] * len(w_i_j_v)
+                    factors += [-self.data.distances[i, j]] * len(w_i_j_v)
                     factors += w_i_j_v
                     
                     self.add_constraint_geq(factors, clause, -self.data.depot.due_date)
@@ -370,7 +370,7 @@ class Solver:
                 factors += [-self.data.depot.due_date] * len(w_i_j_v)
                 clause += w_i_j_v
                 
-                value = customer_i.service_time + round(self.data.distances[i, j]) - self.data.depot.due_date
+                value = customer_i.service_time + self.data.distances[i, j] - self.data.depot.due_date
                 
                 self.add_constraint_geq(factors, clause, value)
         
@@ -398,7 +398,7 @@ class Solver:
                         continue
                     
                     w_i_j_v = self.get(f'w_{i}_{j}_{v}')
-                    self.add_objective(round(self.data.distances[i, j]), w_i_j_v)
+                    self.add_objective(self.data.distances[i, j], w_i_j_v)
         
     @timer
     def run(self) -> tuple[float, list[Route]]:

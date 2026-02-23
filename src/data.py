@@ -41,6 +41,6 @@ class Data:
             
         for i, i_customer in enumerate(self.customers):
             for j, j_customer in enumerate(self.customers[i + 1:], start=i + 1):
-                self.distances[i, j] = self.distances[j, i] = round(distance(i_customer.pos, j_customer.pos))
-        
+                self.distances[i, j] = self.distances[j, i] = ceil(10 * distance(i_customer.pos, j_customer.pos))
+                
         return self

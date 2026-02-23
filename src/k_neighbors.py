@@ -78,17 +78,17 @@ class KNeighbors:
             for i in range(len(self.data.customers)):
                 matrix[i, i] = 0
             
-            matrix[0, route[0].id] = matrix[route[0].id, 0] = round(self.data.distances[0, route[0].id])
-            matrix[0, route[-1].id] = matrix[route[-1].id, 0] = round(self.data.distances[0, route[-1].id])
+            matrix[0, route[0].id] = matrix[route[0].id, 0] = self.data.distances[0, route[0].id]
+            matrix[0, route[-1].id] = matrix[route[-1].id, 0] = self.data.distances[0, route[-1].id]
             
             for i in range(len(route) - 1):
-                distance = round(self.data.distances[route[i].id, route[i + 1].id])
+                distance = self.data.distances[route[i].id, route[i + 1].id]
                 
                 matrix[route[i].id, route[i + 1].id] = matrix[route[i + 1].id, route[i].id] = distance
                 
             for customer in route:
                 for neighbor in self.nearest_neighbors(customer.id):
-                    distance = round(self.data.distances[customer.id, neighbor])
+                    distance = self.data.distances[customer.id, neighbor]
                     matrix[customer.id, neighbor] = matrix[neighbor, customer.id] = distance
             
             matrices.append(matrix)

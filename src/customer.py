@@ -16,9 +16,9 @@ class Customer:
         self.id = id
         self.pos = np.array([x, y])
         self.demand = demand
-        self.ready_time = ready_time
-        self.due_date = due_date
-        self.service_time = service_time
+        self.ready_time = 10 * ready_time
+        self.due_date = 10 * due_date
+        self.service_time = 10 * service_time
         
     @property
     def x(self):
