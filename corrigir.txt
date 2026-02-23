@@ -1,0 +1,1 @@
+-> python main.py instances/solomon_25/RC101.txt 4 3

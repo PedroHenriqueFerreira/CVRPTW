@@ -29,6 +29,6 @@ solver_cost = sum(route.cost / 10 for route in solver_routes)
 
 print(f'{to_cost} -> {solver_cost}', sum(route.time for route in solver_routes))
 
-plot(data, km_routes)
-plot(data, to_routes)
-plot(data, solver_routes)
+# plot(data, km_routes)
+# plot(data, to_routes)
+# plot(data, solver_routes)
