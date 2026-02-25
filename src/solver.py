@@ -314,8 +314,10 @@ class Solver:
             self.add_constraint_geq(neg_demands, t_i_v, -self.data.vehicle_capacity)
         
         # TIME CONSTRAINTS
-        
-        T_bits = ceil(log2(self.data.depot.due_date))
+        ############### TODO: O ERRO ESTA AQUI
+    
+
+        T_bits = ceil(log2(self.data.depot.due_date)) + 1
         
         exp = [2 ** b for b in range(T_bits)]
         neg_exp = [-item for item in exp]
@@ -350,8 +352,8 @@ class Solver:
                     factors += neg_exp
                     clause += T_i
                     
-                    factors += [-self.data.distances[i, j]] * len(w_i_j_v)
-                    factors += w_i_j_v
+                    factors += [-self.data.distances[i, j]] * len(self.matrices)
+                    clause += w_i_j_v
                     
                     self.add_constraint_geq(factors, clause, -self.data.depot.due_date)
                     
@@ -374,6 +376,7 @@ class Solver:
                 
                 self.add_constraint_geq(factors, clause, value)
         
+        ##############
         # END TIME CONSTRAINTS
         
         # Set false the removed customers
