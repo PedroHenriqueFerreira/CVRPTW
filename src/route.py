@@ -174,7 +174,7 @@ class Route:
         for idx in range(len(self.value) + 1):
             new = self.insertion(idx, customer)
             
-            if best is None or (new.cost < best.cost and new.feasible):
+            if new.feasible and (best is None or new.cost < best.cost):
                 best = new
         
         return best
@@ -242,6 +242,7 @@ class Route:
         time = 0
         
         prev = self.data.depot
+        
         for customer in self:
             time += self.data.distances[prev.id, customer.id]
             
@@ -252,9 +253,7 @@ class Route:
             
             prev = customer
         
-        time += self.data.distances[prev.id, self.data.depot.id]
-        
-        if time > self.data.depot.due_date:
+        if time + self.data.distances[prev.id, 0] > self.data.depot.due_date:
             return float('inf')
         
         return time

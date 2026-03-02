@@ -17,8 +17,6 @@ class Data:
         
         self.depot: Customer = None # Depot customer
         
-        self.min_vehicle_number = 0 # Minimum number of vehicles
-        
         self.distances: np.ndarray = None # Distance matrix
     
     def load(self):
@@ -35,12 +33,10 @@ class Data:
         
         self.depot = self.customers[0]
         
-        self.min_vehicle_number = ceil(sum(c.demand for c in self.customers) / self.vehicle_capacity)
-            
         self.distances = np.zeros((len(self.customers), len(self.customers)), dtype=int)
             
         for i, i_customer in enumerate(self.customers):
             for j, j_customer in enumerate(self.customers[i + 1:], start=i + 1):
-                self.distances[i, j] = self.distances[j, i] = ceil(10 * distance(i_customer.pos, j_customer.pos))
+                self.distances[i, j] = self.distances[j, i] = round(10 * distance(i_customer.pos, j_customer.pos))
                 
         return self

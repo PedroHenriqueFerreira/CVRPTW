@@ -53,10 +53,10 @@ class KMeans:
                         continue
                     
                     if len(cluster):
-                        cost = distance(cluster[-1].pos, customer.pos)
+                        cost = 10 * distance(cluster[-1].pos, customer.pos)
                         
                         time = cluster.time + cost
-                    
+
                         if time > customer.due_date:
                             continue
                         
@@ -66,36 +66,36 @@ class KMeans:
                             continue
                         
                     else:
-                        cost = distance(cluster.pos, customer.pos)
+                        cost = 10 * distance(cluster.pos, customer.pos)
                         
                         # Dont need to check constraints for a single customer (only depot -> customer -> depot)
                         
                     if cost < best_cost:
-                        best_cost = cost
                         best = cluster
+                        best_cost = cost
                         
                 if best is None:
                     remaining.append(customer)
                     # raise ValueError('Increase the number of clusters')
                 else:
                     best.append(customer)
-                
+            
             for customer in remaining:
                 clusters = sorted(clusters, key=lambda cluster: distance(cluster.pos, customer.pos))
                 
-                best_insertion = None
+                best_cluster = None
+                best_cost = float('inf')
                 
-                for i, cluster in enumerate(clusters):
+                for cluster in clusters:
                     best_insertion = cluster.best_insertion(customer)
                     
-                    if best_insertion is not None:
-                        clusters[i] = best_insertion
-                        
-                        break
+                    if best_insertion is not None and abs(cluster.cost - best_insertion.cost) < best_cost:
+                        best_cluster = cluster
+                        best_cost = abs(cluster.cost - best_insertion.cost)
             
-                if best_insertion is None:
-                    raise ValueError('Increase the number of clusters')
-            
+                if best_cluster is not None:
+                    best_cluster.append(customer)
+
             for i, cluster in enumerate(clusters):
                 if len(cluster):
                     pos[i] = np.mean([customer.pos for customer in cluster], axis=0)

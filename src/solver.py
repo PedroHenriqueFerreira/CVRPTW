@@ -60,7 +60,9 @@ class Solver:
     def add_constraint_leq(self, factors: list[int], clause: list[int], value: int):
         ''' Add a clause with the less than or equal operator '''
         
-        self.add_constraint(factors, clause, '<=', value)
+        # self.add_constraint(factors, clause, '<=', value)
+        
+        self.add_constraint_geq([-f for f in factors], clause, -value)
         
     def add_constraint_geq(self, factors: list[int], clause: list[int], value: int):
         ''' Add a clause with the greater than or equal operator '''
@@ -105,6 +107,8 @@ class Solver:
                 values += [int(v) for v in line[2:].replace('x', '').replace('c', '').split()] 
             
         vehicles: list[dict[int, int]] = [{} for _ in range(len(self.matrices))]
+                
+        CUSTOMERS_TIME = {}
                          
         for item in values:
             if item not in self.mapping_inv:
@@ -113,6 +117,19 @@ class Solver:
             edge = self.mapping_inv[item]
             
             if not edge.startswith('w_'):
+                ####
+                
+                if edge.startswith('s_'):
+                    _, i, b = edge.split('_')
+                    i, b = int(i), int(b)
+                    
+                    if i not in CUSTOMERS_TIME:
+                        CUSTOMERS_TIME[i] = 0
+                    
+                    CUSTOMERS_TIME[i] += (1 << b)
+                
+                ####
+                
                 continue
             
             i, j, v = map(int, edge.split('_')[1:])
@@ -143,15 +160,15 @@ class Solver:
             with open('output.txt', 'r') as output_file:
                 routes = self.decode(output_file.readlines())
         
-            remove('input.txt')
-            remove('output.txt')
+            remove('./input.txt')
+            remove('./output.txt')
 
             return routes 
         
-        except Exception as e:    
-            print(e)
+        except Exception:    
+            print('Cannot find a solution')
             
-            raise Exception('Cannot solve the model')
+            return []
         
     def load_model(self):
         ''' Load the model '''
@@ -285,10 +302,10 @@ class Solver:
                     self.add_constraint_eq(None, c_i_i_v, 0)
         else: 
             # Subtour Elimination (MTZ)
-            exp = [2 ** b for b in range(u_bits)]
-            neg_exp = [-item for item in exp]
+            powers = [2 ** b for b in range(u_bits)]
+            neg_powers = [-item for item in powers]
             
-            u_factors = neg_exp + exp + [-len(self.data.customers) + 1]
+            u_factors = neg_powers + powers + [-len(self.data.customers) + 1]
             u_value = -len(self.data.customers) + 2
             
             for v in range(len(self.matrices)):
@@ -307,75 +324,80 @@ class Solver:
                         self.add_constraint_geq(u_factors, u_clause, u_value)
         
         # A vehicle cannot exceed its capacity
-        neg_demands = [-c.demand for c in self.data.customers]
+        demands = [c.demand for c in self.data.customers]
         for v in range(len(self.matrices)):
             t_i_v = [self.get(f't_{i}_{v}') for i in range(len(self.data.customers))]
             
-            self.add_constraint_geq(neg_demands, t_i_v, -self.data.vehicle_capacity)
+            self.add_constraint_leq(demands, t_i_v, self.data.vehicle_capacity)
         
         # TIME CONSTRAINTS
-        ############### TODO: O ERRO ESTA AQUI
     
-
-        T_bits = ceil(log2(self.data.depot.due_date)) + 1
+        max_due_date = max(c.due_date for c in self.data.customers)
+        max_service_time = max(c.service_time for c in self.data.customers)
+        max_distance = self.data.distances.max()
         
-        exp = [2 ** b for b in range(T_bits)]
-        neg_exp = [-item for item in exp]
+        s_bits = ceil(log2(max_due_date + max_service_time + max_distance + 1))
+        
+        powers = [2 ** b for b in range(s_bits)]
+        neg_powers = [-item for item in powers]
         
         for i, customer in enumerate(self.data.customers):
+            s_i = [self.get(f's_{i}_{b}') for b in range(s_bits)]
+            
             if i == 0:
-                continue
-            
-            T_i = [self.get(f'T_{i}_{b}') for b in range(T_bits)]
-            
-            self.add_constraint_geq(exp, T_i, customer.ready_time)
-            self.add_constraint_geq(neg_exp, T_i, -customer.due_date)
-        
-        T_0 = [self.get(f'T_{0}_{b}') for b in range(T_bits)]
-        self.add_constraint_eq(exp, T_0, 0)
-        
+                self.add_constraint_eq(powers, s_i, 0)
+            else:
+                self.add_constraint_geq(powers, s_i, customer.ready_time)
+                self.add_constraint_leq(powers, s_i, customer.due_date)
+    
         for i, customer_i in enumerate(self.data.customers):
             for j, customer_j in enumerate(self.data.customers):
+                # if (i == 16 and j == 15) or (i == 23 and j == 21):
+                #     continue
+                
                 if i == j:
                     continue
                 
+                # if customer_i.ready_time + customer_i.service_time + self.data.distances[i, j] > customer_j.due_date:
+                #     w_i_j_v = [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
+                    
+                #     self.add_constraint_eq(None, w_i_j_v, 0)
+                    
+                #     continue
+                
                 if j == 0:
+                    continue
                     
-                    # CHECK IF THE VEHICLE CAN RETURN TO THE DEPOT
-                    
-                    w_i_j_v = [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
-                    T_i = [self.get(f'T_{i}_{b}') for b in range(T_bits)]
-                    
-                    factors = []
-                    clause = []
-                    
-                    factors += neg_exp
-                    clause += T_i
-                    
-                    factors += [-self.data.distances[i, j]] * len(self.matrices)
-                    clause += w_i_j_v
-                    
-                    self.add_constraint_geq(factors, clause, -self.data.depot.due_date)
+                    travel = self.data.distances[i, 0]
+                    service = customer.service_time
+
+                    s_i = [self.get(f's_{i}_{b}') for b in range(s_bits)]
+
+                    factors = powers
+                    clause  = s_i
+
+                    rhs = self.data.depot.due_date - service - travel
+
+                    self.add_constraint_leq(factors, clause, rhs)
                     
                     continue
                 
-                w_i_j_v = [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
-                T_i = [self.get(f'T_{i}_{b}') for b in range(T_bits)]
-                T_j = [self.get(f'T_{j}_{b}') for b in range(T_bits)]
+                s_i = [self.get(f's_{i}_{b}') for b in range(s_bits)]
+                s_j = [self.get(f's_{j}_{b}') for b in range(s_bits)]
                 
-                factors = []
-                clause = []
+                M_ij = customer_i.due_date + customer_i.service_time + self.data.distances[i, j] - customer_j.ready_time
+                    
+                factors = powers + neg_powers + [-M_ij]
+                clause = s_j + s_i
+                    
+                value = customer_i.service_time + self.data.distances[i, j] - M_ij
+                    
+                for v in range(len(self.matrices)):
+                    w_i_j_v = self.get(f'w_{i}_{j}_{v}')
+                    
+                    # ALGUM ERRO    
+                    self.add_constraint_geq(factors, clause + [w_i_j_v], value)    
                 
-                factors += exp + neg_exp
-                clause += T_j + T_i
-                
-                factors += [-self.data.depot.due_date] * len(w_i_j_v)
-                clause += w_i_j_v
-                
-                value = customer_i.service_time + self.data.distances[i, j] - self.data.depot.due_date
-                
-                self.add_constraint_geq(factors, clause, value)
-        
         ##############
         # END TIME CONSTRAINTS
         

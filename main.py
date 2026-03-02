@@ -21,6 +21,15 @@ kn_time, matrices = KNeighbors(data, int(argv[3]), to_routes).run()
 km_cost = sum(route.cost / 10 for route in km_routes)
 to_cost = sum(route.cost / 10 for route in to_routes)
 
+print(f' KMeans ({km_time:.3f}s, {km_cost}) '.center(50, '-'))
+for km_route in km_routes:
+    print(km_route, km_route.cost / 10, km_route.time)
+
+print(f' TwoOpt ({to_time:.3f}s, {to_cost}) '.center(50, '-'))
+for to_route in to_routes:
+    print(to_route, to_route.cost / 10, to_route.time)
+
+
 print(f'{km_cost} -> {to_cost}')
 
 solver_time, solver_routes = Solver(data, matrices).run()
