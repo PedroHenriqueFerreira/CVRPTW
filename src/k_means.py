@@ -83,26 +83,28 @@ class KMeans:
             for customer in remaining:
                 clusters = sorted(clusters, key=lambda cluster: distance(cluster.pos, customer.pos))
                 
+                best_i = None
                 best_cluster = None
                 best_cost = float('inf')
                 
-                for cluster in clusters:
+                for i, cluster in enumerate(clusters):
                     best_insertion = cluster.best_insertion(customer)
                     
-                    if best_insertion is not None and abs(cluster.cost - best_insertion.cost) < best_cost:
-                        best_cluster = cluster
-                        best_cost = abs(cluster.cost - best_insertion.cost)
+                    if best_insertion is not None and best_insertion.cost - cluster.cost < best_cost:
+                        best_i = i
+                        best_cluster = best_insertion
+                        best_cost = best_insertion.cost - cluster.cost
             
-                if best_cluster is not None:
-                    best_cluster.append(customer)
+                if best_i is not None:
+                    clusters[best_i] = best_cluster
 
             for i, cluster in enumerate(clusters):
                 if len(cluster):
                     pos[i] = np.mean([customer.pos for customer in cluster], axis=0)
                 else:
                     pos[i] = choice(customers).pos
-                
+            
             if np.allclose(pos, [cluster.pos for cluster in clusters]):
                 break
-            
+        
         return clusters

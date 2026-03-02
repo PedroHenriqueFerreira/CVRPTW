@@ -28,8 +28,11 @@ class Data:
         self.name = lines[0].strip()
         self.max_vehicle_number, self.vehicle_capacity = map(int, lines[4].strip().split())
             
-        for line in lines[9:-1]:
-            self.customers.append(Customer(*map(int, line.strip().split())))
+        for i, line in enumerate(lines[9:-1]):
+            try:
+                self.customers.append(Customer(*map(int, line.strip().split())))
+            except Exception as e:
+                print(f'Error processing {self.file}')
         
         self.depot = self.customers[0]
         

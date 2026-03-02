@@ -166,7 +166,7 @@ class Solver:
             return routes 
         
         except Exception:    
-            print('Cannot find a solution')
+            print('Cannot find a solution', end=' ')
             
             return []
         
