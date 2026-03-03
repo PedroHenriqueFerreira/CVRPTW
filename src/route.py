@@ -118,7 +118,7 @@ class Route:
         
         new_route = Route(self.data, value, self.pos, -1, self.demand)
         
-        print('TESTE', cost, new_route.cost)
+        # print('TESTE', cost, new_route.cost)
         
         return new_route
 
