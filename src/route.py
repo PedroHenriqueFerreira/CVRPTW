@@ -118,7 +118,7 @@ class Route:
         
         new_route = Route(self.data, value, self.pos, -1, self.demand)
         
-        # print('TESTE', cost, new_route.cost)
+        # print('TESTE', cost - new_route.cost)
         
         return new_route
 
@@ -266,5 +266,10 @@ class Route:
     def feasible(self) -> bool:
         ''' Check if the route is feasible '''
         
-        return self.demand <= self.data.vehicle_capacity and self.time <= self.data.depot.due_date
-    
+        if self.demand > self.data.vehicle_capacity:
+            return False
+        
+        if self.time + self.data.distances[self[-1].id, 0] > self.data.depot.due_date:
+            return False
+        
+        return True

@@ -51,7 +51,7 @@ class KMeans:
                         continue
                     
                     if len(cluster):
-                        cost = 10 * distance(cluster[-1].pos, customer.pos)
+                        cost = distance(cluster[-1].pos, customer.pos)
                         
                         time = cluster.time + cost
 
@@ -64,7 +64,7 @@ class KMeans:
                             continue
                         
                     else:
-                        cost = 10 * distance(cluster.pos, customer.pos)
+                        cost = distance(cluster.pos, customer.pos)
                         
                         # Dont need to check constraints for a single customer (only depot -> customer -> depot)
                         

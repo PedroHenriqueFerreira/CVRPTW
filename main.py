@@ -11,48 +11,20 @@ from sys import argv
 def main(*args):
     data = Data(args[0]).load()
 
-    km_time, km_routes = KMeans(data, random_state=0).run()
-    to_time, to_routes = TwoOpt(km_routes).run()
+    km = KMeans(data, random_state=0).run()
+    to = TwoOpt(km[1]).run()
 
-    km_cost = sum(route.cost / 10 for route in km_routes)
-    to_cost = sum(route.cost / 10 for route in to_routes)
+    kn = KNeighbors(data, int(args[1]), to[1]).run()
+    solver = Solver(data, kn[1]).run()
 
-    km_test = sum(route.time for route in km_routes)
-    to_test = sum(route.time for route in to_routes)
-
-    # print(f' KMeans (spent={km_time:.3f}s, cost={km_cost}, time={km_test}s) '.center(80, '-'))
-    # for km_route in km_routes:
-    #     print(km_route, km_route.cost / 10, km_route.time)
-
-    # print(f' TwoOpt (spent={to_time:.3f}s, cost={to_cost}, time={to_test}s) '.center(80, '-'))
-    # for to_route in to_routes:
-    #     print(to_route, to_route.cost / 10, to_route.time)
-
-    print(f"{args[0].split('/')[-1].split('.')[0]}[{len(km_routes)}]", end=' -> ')
-
-    print(f'{km_cost:.3f} ({km_test}) -> {to_cost:.3f} ({to_test}) -> ', end='')
-
-    if int(args[1]) >= 0:
-        kn_time, matrices = KNeighbors(data, int(args[1]), to_routes).run()
-        solver_time, solver_routes = Solver(data, matrices).run()
-
-        solver_cost = sum(route.cost / 10 for route in solver_routes)
-        solver_test = sum(route.time for route in solver_routes)
-
-        print(f'{solver_cost:.3f} ({solver_test})')
-    else:
-        print('No solver')
-
-    if len(args) > 2 and args[2] == 'plot':
-        plot(data, km_routes)
-        plot(data, to_routes)
-        
-        if int(args[1]) >= 0:
-            plot(data, solver_routes)
+    return km, to, kn, solver
 
 if __name__ == '__main__':
     if len(argv) < 3:
         print('Usage: python main.py <instance_file> <k_neighbors>')
         exit(1)
     
-    main(*argv[1:])
+    km, to, kn, solver = main(*argv[1:])
+    
+    print(f'K-Means + Two-Opt (Time): {km[0] + to[0]:.3f}')
+    print(f'Solver (Time): {kn[0] + solver[0]:.3f}')
