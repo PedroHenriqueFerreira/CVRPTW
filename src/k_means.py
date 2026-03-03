@@ -12,12 +12,10 @@ class KMeans:
     def __init__(
         self, 
         data: Data,
-        n_clusters: int,
-        max_iter = 100, 
+        max_iter = 300, 
         random_state: int | None = None
     ):
         self.data = data
-        self.n_clusters = n_clusters
         self.max_iter = max_iter
 
         if random_state is not None:
@@ -27,12 +25,12 @@ class KMeans:
     def run(self) -> tuple[float, list[Route]]:
         ''' Returns a list of clusters (routes) and the time taken to compute them.'''
         
-        customers = sorted(self.data.customers[1:], key=lambda c: c.due_date)
+        customers = sorted(self.data.customers[1:], key=lambda c: (c.due_date, c.ready_time))
     
         clusters: list[Route] = []
         pos: list[np.ndarray] = []
         
-        for customer in sample(customers, self.n_clusters):
+        for customer in sample(customers, self.data.min_vehicle_number):
             clusters.append(Route(self.data, [], customer.pos))
             pos.append(customer.pos)
         
@@ -83,20 +81,26 @@ class KMeans:
             for customer in remaining:
                 clusters = sorted(clusters, key=lambda cluster: distance(cluster.pos, customer.pos))
                 
-                best_i = None
-                best_cluster = None
-                best_cost = float('inf')
+                inserted = False
                 
                 for i, cluster in enumerate(clusters):
                     best_insertion = cluster.best_insertion(customer)
                     
-                    if best_insertion is not None and best_insertion.cost - cluster.cost < best_cost:
-                        best_i = i
-                        best_cluster = best_insertion
-                        best_cost = best_insertion.cost - cluster.cost
+                    if best_insertion is not None:
+                        clusters[i] = best_insertion
+                        inserted = True
+                        
+                        break
             
-                if best_i is not None:
-                    clusters[best_i] = best_cluster
+                if not inserted:
+                    # INCREASE THE NUMBER OF CLUSTERS
+                    if len(clusters) < self.data.max_vehicle_number:
+                        clusters.append(Route(self.data, [], customer.pos))
+                        pos.append(customer.pos)
+                        
+                        break
+                    else:
+                        raise ValueError('Increase the number of clusters')
 
             for i, cluster in enumerate(clusters):
                 if len(cluster):

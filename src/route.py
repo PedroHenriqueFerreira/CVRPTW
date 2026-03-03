@@ -114,9 +114,13 @@ class Route:
                 cost += self.data.distances[value[i], 0]
             
             # TODO: FIX
-            cost = -1
+            # cost = -1
         
-        return Route(self.data, value, self.pos, cost, self.demand)
+        new_route = Route(self.data, value, self.pos, -1, self.demand)
+        
+        print('TESTE', cost, new_route.cost)
+        
+        return new_route
 
     def best_reversed(self):
         ''' Returns the best reversed route '''
@@ -176,7 +180,7 @@ class Route:
             
             if new.feasible and (best is None or new.cost < best.cost):
                 best = new
-        
+                
         return best
 
     @property
