@@ -8,13 +8,11 @@ from src.utils import plot
 
 from sys import argv
 
-def main(*args):
-    data = Data(args[0]).load()
-
+def main(data: Data, neighbors: int):
     km = KMeans(data, random_state=0).run()
     to = TwoOpt(km[1]).run()
 
-    kn = KNeighbors(data, int(args[1]), to[1]).run()
+    kn = KNeighbors(data, neighbors, to[1]).run()
     solver = Solver(data, kn[1]).run()
 
     return km, to, kn, solver
@@ -24,7 +22,8 @@ if __name__ == '__main__':
         print('Usage: python main.py <instance_file> <k_neighbors>')
         exit(1)
     
-    km, to, kn, solver = main(*argv[1:])
+    data = Data(argv[1]).load()
+    km, to, kn, solver = main(data, int(argv[2]))
     
-    print(f'K-Means + Two-Opt (Time): {km[0] + to[0]:.3f}')
-    print(f'Solver (Time): {kn[0] + solver[0]:.3f}')
+    plot(data, to[1])
+    plot(data, solver[1])

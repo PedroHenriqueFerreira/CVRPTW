@@ -6,7 +6,7 @@ from src.data import Data
 from src.customer import Customer
 from src.route import Route
 
-from src.utils import timer, distance
+from src.utils import timer
 
 class KMeans:
     def __init__(
@@ -51,7 +51,7 @@ class KMeans:
                         continue
                     
                     if len(cluster):
-                        cost = distance(cluster[-1].pos, customer.pos)
+                        cost = self.data.distance(cluster[-1].pos, customer.pos)
                         
                         time = cluster.time + cost
 
@@ -63,8 +63,8 @@ class KMeans:
                         if time + self.data.distances[customer.id, 0] > self.data.depot.due_date:
                             continue
                         
-                    else:
-                        cost = distance(cluster.pos, customer.pos)
+                    else:   
+                        cost = self.data.distance(cluster.pos, customer.pos)
                         
                         # Dont need to check constraints for a single customer (only depot -> customer -> depot)
                         
@@ -79,7 +79,7 @@ class KMeans:
                     best.append(customer)
             
             for customer in remaining:
-                clusters = sorted(clusters, key=lambda cluster: distance(cluster.pos, customer.pos))
+                clusters = sorted(clusters, key=lambda cluster: self.data.distance(cluster.pos, customer.pos))
                 
                 inserted = False
                 

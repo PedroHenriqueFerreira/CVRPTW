@@ -2,13 +2,13 @@ import numpy as np
 from math import ceil
 
 from src.customer import Customer
-from src.utils import distance
 
 class Data:
     ''' Class representing a CVRPTW instance.'''
     
-    def __init__(self, file: str):
+    def __init__(self, file: str, precision: int = 0):
         self.file = file # Instance file
+        self.precision = precision # Distance precision
         
         self.name = '' # Instance name
         self.max_vehicle_number = 0 # Maximum number of vehicles
@@ -30,7 +30,7 @@ class Data:
         self.max_vehicle_number, self.vehicle_capacity = map(int, lines[4].strip().split())
         
         for i, line in enumerate(lines[9:-1]):
-            self.customers.append(Customer(*map(int, line.strip().split())))
+            self.customers.append(Customer(self, *map(int, line.strip().split())))
         
         self.min_vehicle_number = ceil(sum(customer.demand for customer in self.customers) / self.vehicle_capacity)
         
@@ -39,6 +39,13 @@ class Data:
         self.distances = np.zeros((len(self.customers), len(self.customers)), dtype=int)            
         for i in range(len(self.customers)):
             for j in range(i + 1, len(self.customers)):
-                self.distances[i][j] = self.distances[j][i] = round(distance(self.customers[i].pos, self.customers[j].pos))
+                d = self.distance(self.customers[i].pos, self.customers[j].pos)
+                
+                self.distances[i][j] = self.distances[j][i] = d
                 
         return self
+
+    def distance(self, a: np.ndarray, b: np.ndarray) -> int:
+        ''' Calculate the distance between two positions '''
+    
+        return round(10 ** self.precision * np.linalg.norm(a - b))

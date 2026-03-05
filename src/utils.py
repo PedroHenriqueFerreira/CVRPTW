@@ -20,11 +20,6 @@ def timer(func):
     
     return wrapper
 
-def distance(a: np.ndarray, b: np.ndarray) -> int:
-    ''' Calculate the distance between two positions '''
-    
-    return np.linalg.norm(a - b)
-
 def plot(instance, clusters):
     ''' Plot the instance and the clusters '''
     

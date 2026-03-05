@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
 import numpy as np
+
+if TYPE_CHECKING:
+    from src.data import Data
 
 class Customer:
     ''' Class representing a customer in the CVRPTW problem.'''
     
     def __init__(
         self, 
+        data: 'Data',
         id: int,
         x: int, 
         y: int, 
@@ -13,12 +18,13 @@ class Customer:
         due_date: int, 
         service_time: int
     ):
+        self.data = data
         self.id = id
         self.pos = np.array([x, y])
         self.demand = demand
-        self.ready_time = ready_time
-        self.due_date = due_date
-        self.service_time = service_time
+        self.ready_time = 10 ** self.data.precision * ready_time
+        self.due_date = 10 ** self.data.precision * due_date
+        self.service_time = 10 ** self.data.precision * service_time
         
     @property
     def x(self):
