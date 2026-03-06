@@ -327,11 +327,7 @@ class Solver:
         # TIME CONSTRAINTS
     
         if True:
-            max_due_date = max(c.due_date for c in self.data.customers)
-            max_service_time = max(c.service_time for c in self.data.customers)
-            max_distance = self.data.distances.max()
-            
-            s_bits = ceil(log2(max_due_date + max_service_time + max_distance + 1))
+            s_bits = ceil(log2(self.data.depot.due_date)) + 1
             
             powers = [2 ** b for b in range(s_bits)]
             neg_powers = [-item for item in powers]
