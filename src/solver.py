@@ -154,7 +154,7 @@ class Solver:
         with open('input.txt', 'w+') as input_file:
             input_file.write(self.encode())
         
-        system(f'./clasp input.txt > output.txt --time-limit={60 * 4}')
+        system(f'./clasp input.txt > output.txt --time-limit={100}')
         
         with open('output.txt', 'r') as output_file:
             routes = self.decode(output_file.readlines())

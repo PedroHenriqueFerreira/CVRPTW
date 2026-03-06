@@ -3,7 +3,7 @@ import pandas as pd
 from src.data import Data
 from main import main
 
-for group in ['solomon_25']:#, 'solomon_50', 'solomon_100']:
+for group in ['solomon_50']:#, 'solomon_50', 'solomon_100']:
     print(f' {group} '.center(80, '-'))
     
     df = pd.read_csv(f'instances/{group}.csv')
@@ -20,7 +20,7 @@ for group in ['solomon_25']:#, 'solomon_50', 'solomon_100']:
         km_cost = to_cost = solver_cost = n_vehicles = 0
         
         for i in range(3):
-            km, to, kn, solver = main(data, 4)
+            km, to, kn, solver = main(data, 5)
             
             km_to_time += km[0] + to[0]
             kn_solver_time += kn[0] + solver[0]
