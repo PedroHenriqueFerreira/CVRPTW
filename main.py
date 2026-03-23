@@ -15,7 +15,9 @@ for group in ['solomon_25', 'solomon_50', 'solomon_100']:
     columns = ['Instance']
     
     for i in range(1, n_runs + 1):
-        columns += [f'KM+TO Time {i}', f'KM+TO+KN+Solver Time {i}', f'KM+TO Distance {i}', f'KN+Solver Distance {i}']
+        columns += [f'KM+TO Time {i}', f'KM+TO+KN+Solver Time {i}', f'KM+TO Distance {i}', f'KN+Solver Distance {i}', f'Vehicles {i}']
+
+    columns += ['KM+TO Time', 'KM+TO+KN+Solver Time']
 
     new_df = pd.DataFrame(columns=columns)
 
@@ -47,7 +49,15 @@ for group in ['solomon_25', 'solomon_50', 'solomon_100']:
             dic[f'KM+TO+KN+Solver Time {i + 1}'] = round(km_to_times[i] + kn_solver_times[i], 3)
             dic[f'KM+TO Distance {i + 1}'] = to_costs[i]
             dic[f'KN+Solver Distance {i + 1}'] = solver_costs[i]
-            dic[f'Vehicles'] = vehicle_counts[i]
+            dic[f'Vehicles {i + 1}'] = vehicle_counts[i]
+            
+        km_to_time_mean = sum(km_to_times) / n_runs
+        kn_solver_time_mean = sum(kn_solver_times) / n_runs
+            
+        dic[f'KM+TO Time'] = round(km_to_time_mean, 3)
+        dic[f'KM+TO+KN+Solver Time'] = round(km_to_time_mean + kn_solver_time_mean, 3)
+        
+        new_df.loc[len(new_df)] = dic
         
         print(f'Instance {line.Instance} processed')
                 
