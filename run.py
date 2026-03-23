@@ -9,7 +9,7 @@ from src.utils import plot
 from sys import argv
 
 def main(data: Data, neighbors: int):
-    km = KMeans(data, random_state=0).run()
+    km = KMeans(data).run()
     to = TwoOpt(km[1]).run()
 
     kn = KNeighbors(data, neighbors, to[1]).run()

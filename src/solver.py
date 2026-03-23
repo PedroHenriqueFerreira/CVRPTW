@@ -154,7 +154,7 @@ class Solver:
         with open('input.txt', 'w+') as input_file:
             input_file.write(self.encode())
         
-        system(f'./clasp input.txt > output.txt --time-limit={100}')
+        system(f'./clasp input.txt > output.txt --time-limit={60}')
         
         with open('output.txt', 'r') as output_file:
             routes = self.decode(output_file.readlines())
@@ -326,49 +326,47 @@ class Solver:
         
         # TIME CONSTRAINTS
     
-        if True:
-            s_bits = ceil(log2(self.data.depot.due_date)) + 1
-            
-            powers = [2 ** b for b in range(s_bits)]
-            neg_powers = [-item for item in powers]
-            
-            for i, customer in enumerate(self.data.customers):
-                s_i = [self.get(f's_{i}_{b}') for b in range(s_bits)]
-                
-                if i == 0:
-                    self.add_constraint_eq(powers, s_i, 0)
-                else:
-                    self.add_constraint_geq(powers, s_i, customer.ready_time)
-                    self.add_constraint_leq(powers, s_i, customer.due_date)
+        a_bits = ceil(log2(self.data.depot.due_date)) + 1
         
-            for i, ci in enumerate(self.data.customers):
-                for j, cj in enumerate(self.data.customers):
-                    if i == j:
-                        continue
+        powers = [2 ** b for b in range(a_bits)]
+        neg_powers = [-item for item in powers]
+        
+        for i, customer in enumerate(self.data.customers):
+            a_i = [self.get(f'a_{i}_{b}') for b in range(a_bits)]
+            
+            if i == 0:
+                self.add_constraint_eq(powers, a_i, 0)
+            else:
+                self.add_constraint_geq(powers, a_i, customer.ready_time)
+                self.add_constraint_leq(powers, a_i, customer.due_date)
+    
+        for i, ci in enumerate(self.data.customers):
+            for j, cj in enumerate(self.data.customers):
+                if i == j:
+                    continue
+                
+                # If the time to visit j after i is greater than the due date of j then the edge cannot be used
+                if ci.ready_time + ci.service_time + self.data.distances[i, j] > cj.due_date:
+                    w_i_j_v = [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
                     
-                    # If the time to visit j after i is greater than the due date of j then the edge cannot be used
-                    if ci.ready_time + ci.service_time + self.data.distances[i, j] > cj.due_date:
-                        w_i_j_v = [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
-                        
-                        self.add_constraint_eq(None, w_i_j_v, 0)
-                        
-                        continue
+                    self.add_constraint_eq(None, w_i_j_v, 0)
                     
-                    s_i = [self.get(f's_{i}_{b}') for b in range(s_bits)]
-                    s_j = [self.get(f's_{j}_{b}') for b in range(s_bits)]
+                    continue
+                
+                a_i = [self.get(f'a_{i}_{b}') for b in range(a_bits)]
+                a_j = [self.get(f'a_{j}_{b}') for b in range(a_bits)]
+                
+                # The time to return the depot should not be greater than the depot due date
+                if j == 0:
+                    self.add_constraint_leq(powers, a_i, self.data.depot.due_date - self.data.distances[i, 0] - ci.service_time)
+                    continue
+                
+                M_ij = ci.service_time + self.data.distances[i, j] + ci.due_date - cj.ready_time
                     
-                    # The time to return the depot should not be greater than the depot due date
-                    if j == 0:
-                        self.add_constraint_leq(powers, s_i, self.data.depot.due_date - self.data.distances[i, 0] - ci.service_time)
-                        continue
+                factors = powers + neg_powers + [-M_ij for _ in range(len(self.matrices))]
+                clause = a_j + a_i + [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
                     
-                    M_ij = ci.service_time + self.data.distances[i, j] + ci.due_date - cj.ready_time
-                        
-                    factors = powers + neg_powers + [-M_ij for _ in range(len(self.matrices))]
-                    clause = s_j + s_i + [self.get(f'w_{i}_{j}_{v}') for v in range(len(self.matrices))]
-                        
-                    # S_J - S_I -M * USED >= SERVICE + DISTANCE -M
-                    self.add_constraint_geq(factors, clause, cj.ready_time - ci.due_date)
+                self.add_constraint_geq(factors, clause, cj.ready_time - ci.due_date)
                 
         ##############
         # END TIME CONSTRAINTS
